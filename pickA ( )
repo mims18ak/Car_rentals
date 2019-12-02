@@ -1,0 +1,43 @@
+SELECT check_out_date();
+SELECT check_out_date_subquery();
+SELECT rental_return_date();
+SELECT rental_return_date_subquery();
+
+/*ERROR:  argument of AND must not return a set
+LINE 2: ...e() = ANY (SELECT date_out FROM booking_tbl WHERE date_out B...*/
+
+SELECT car_id, CASE
+	WHEN check_out_date() = ANY (SELECT date_out FROM booking_tbl WHERE date_out BETWEEN check_out_date_subquery() and rental_return_date_subquery()) 
+		THEN date_out
+	ELSE NULL
+	END AS date_car_is_already_booked,
+CASE 
+	WHEN rental_return_date() = ANY (return_date BETWEEN date_out and return_date)
+		THEN return_date
+	ELSE NULL
+	END AS date_car_returns,
+CASE
+	WHEN check_out_date() = ANY (date_out BETWEEN date_out and return_date)
+		THEN  'Unavailable'
+	ELSE 'Available'
+	END AS Available_Cars_For_Rent
+FROM booking_tbl
+GROUP BY car_id;
+
+    Column     |  Type   |                            Modifiers                
+----------------+---------+------------------------------------------------------------------
+ booking_id     | integer | not null default nextval('booking_tbl_booking_id_seq'::regclass)
+ customer_id    | integer |
+ payment_id     | integer |
+ date_out       | date    |
+ return_date    | date    |
+ number_of_days | integer |
+ car_id         | integer |
+Indexes:
+    "booking_tbl_pkey" PRIMARY KEY, btree (booking_id)
+Foreign-key constraints:
+    "booking_tbl_car_id_fkey" FOREIGN KEY (car_id) REFERENCES car_tbl(car_id)
+    "booking_tbl_customer_id_fkey" FOREIGN KEY (customer_id) REFERENCES customer_tbl(customer_id)
+    "booking_tbl_payment_id_fkey" FOREIGN KEY (payment_id) REFERENCES payment_tbl(payment_id)
+Referenced by:
+    TABLE "check_out_tbl" CONSTRAINT "booking_id_fkey" FOREIGN KEY (booking_id) REFERENCES booking_tbl(booking_id)
