@@ -1,0 +1,25 @@
+SELECT date_out(date);
+SELECT check_out_date_subquery();
+SELECT return_date(date);
+SELECT rental_return_date_subquery();
+
+/*ERROR:  argument of AND must not return a set
+LINE 2: ...e() = ANY (SELECT date_out FROM booking_tbl WHERE date_out B...*/
+
+SELECT car_id, CASE
+	WHEN date_out(date) = ANY (SELECT date_out FROM booking_tbl WHERE date_out BETWEEN check_out_date_subquery() and rental_return_date_subquery()) 
+		THEN date_out
+	ELSE NULL
+	END AS date_car_is_already_booked,
+CASE 
+	WHEN return_date(date) = ANY (return_date BETWEEN date_out and return_date)
+		THEN return_date
+	ELSE NULL
+	END AS date_car_returns,
+CASE
+	WHEN date_out(date) = ANY (date_out BETWEEN date_out and return_date)
+		THEN  'Unavailable'
+	ELSE 'Available'
+	END AS Available_Cars_For_Rent
+FROM booking_tbl
+GROUP BY car_id;
